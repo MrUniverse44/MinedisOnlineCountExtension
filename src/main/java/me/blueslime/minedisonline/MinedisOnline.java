@@ -9,8 +9,9 @@ import java.util.ArrayList;
 
 public final class MinedisOnline extends MinedisExtension {
 
-    private final ArrayList<String> staffList = new ArrayList<>();
-    private final ArrayList<String> onlineList = new ArrayList<>();
+    private final ArrayList<String> staffCommands = new ArrayList<>();
+
+    private final ArrayList<String> onlineCommands = new ArrayList<>();
 
     @Override
     public String getIdentifier() {
@@ -55,85 +56,19 @@ public final class MinedisOnline extends MinedisExtension {
             new DiscordCommandListener(this)
         );
 
-        String guildID = getConfiguration().getString(embedPath + "guild-id", "NOT_SET");
-
-        if (guildID.isEmpty() || guildID.equalsIgnoreCase("NOT_SET")) {
-            getLogger().info("Can't register link command because discord guild id was not set yet.");
-            return;
-        }
-
-        Guild guild = getJDA().getGuildById(guildID);
-
-        if (guild == null) {
-            getLogger().info("Discord GUILD was not found for link command.");
-            return;
-        }
-
-        String description = getConfiguration().getString(embedPath + "command-description", "Check your online list");
-
-        guild.upsertCommand(
-                Commands.slash(
-                    getConfiguration().getString(embedPath + "command", "online"),
-                    description
-                )
-        ).queue(cmd -> onlineList.add(cmd.getId()));
-
-        if (getConfiguration().contains(embedPath + "command-aliases")) {
-            for (String command : getConfiguration().getStringList(embedPath + "command-aliases")) {
-                guild.upsertCommand(
-                        Commands.slash(
-                            command,
-                            description
-                        )
-                ).queue(cmd -> onlineList.add(cmd.getId()));
-            }
-        }
+        registerOnlineCommand(embedPath);
 
         embedPath = "settings.commands.staff-online.";
 
-        description = getConfiguration().getString(embedPath + "command-description", "Check your staff list");
-
-        guildID = getConfiguration().getString(embedPath + "guild-id", "NOT_SET");
-
-        if (guildID.isEmpty() || guildID.equalsIgnoreCase("NOT_SET")) {
-            getLogger().info("Can't register link command because discord guild id was not set yet.");
-            return;
-        }
-
-        guild = getJDA().getGuildById(guildID);
-
-        if (guild == null) {
-            getLogger().info("Discord GUILD was not found for link command.");
-            return;
-        }
-
-        guild.upsertCommand(
-                Commands.slash(
-                        getConfiguration().getString(embedPath + "command", "os"),
-                        description
-                )
-        ).queue(cmd -> staffList.add(cmd.getId()));
-
-        if (getConfiguration().contains(embedPath + "command-aliases")) {
-            for (String command : getConfiguration().getStringList(embedPath + "command-aliases")) {
-                guild.upsertCommand(
-                        Commands.slash(
-                                command,
-                                description
-                        )
-                ).queue(cmd -> staffList.add(cmd.getId()));
-            }
-        }
+        registerStaffOnlineCommand(embedPath);
     }
 
-    @Override
-    public void onDisable() {
-        getLogger().info("All listeners are unloaded from Minedis Online");
-
-        String guildID = getConfiguration().getString("settings.commands.staff-online.guild-id", "NOT_SET");
+    public void registerOnlineCommand(String embedPath) {
+        String guildID = getConfiguration().getString(embedPath + "guild-id", "NOT_SET");
 
         if (guildID.isEmpty() || guildID.equalsIgnoreCase("NOT_SET")) {
-            getLogger().info("Can't register link command because discord guild id was not set yet.");
+            getLogger().info("Can't register online command because discord guild id was not set yet.");
+            getLogger().info("Path: " + embedPath + "guild-id, value: " + guildID);
             return;
         }
 
@@ -144,35 +79,98 @@ public final class MinedisOnline extends MinedisExtension {
             return;
         }
 
-        Guild finalGuild1 = guild;
-        onlineList.forEach(command -> finalGuild1.deleteCommandById(command).queue());
+        getLogger().info("Discord guild-id for online command is: " + guild.getId());
 
-        guildID = getConfiguration().getString("settings.commands.default-online.guild-id", "NOT_SET");
+        String description = getConfiguration().getString(embedPath + "command-description", "Check your online list");
+
+        String command = getConfiguration().getString(embedPath + "command", "online");
+
+        onlineCommands.add(command);
+
+        registerCommand(
+            guild,
+            Commands.slash(
+                command,
+                description
+            )
+        );
+
+        getLogger().info("Registered command: /" + command + " at guild-id: " + guild.getId());
+
+        if (getConfiguration().contains(embedPath + "command-aliases")) {
+            for (String cmd : getConfiguration().getStringList(embedPath + "command-aliases")) {
+                getLogger().info("Registered command: /" + cmd + " at guild-id: " + guild.getId());
+                onlineCommands.add(cmd);
+                registerCommand(
+                    guild,
+                    Commands.slash(
+                            cmd,
+                            description
+                    )
+                );
+            }
+        }
+    }
+
+    public void registerStaffOnlineCommand(String embedPath) {
+        String description = getConfiguration().getString(embedPath + "command-description", "Check your staff list");
+
+        String guildID = getConfiguration().getString(embedPath + "guild-id", "NOT_SET");
 
         if (guildID.isEmpty() || guildID.equalsIgnoreCase("NOT_SET")) {
-            getLogger().info("Can't register link command because discord guild id was not set yet.");
+            getLogger().info("Can't register staff online command because discord guild id was not set yet.");
+            getLogger().info("Path: " + embedPath + "guild-id, value: " + guildID);
             return;
         }
 
-        guild = getJDA().getGuildById(guildID);
+        Guild guild = getJDA().getGuildById(guildID);
 
         if (guild == null) {
             getLogger().info("Discord GUILD was not found for staff online command.");
             return;
         }
 
-        Guild finalGuild = guild;
-        staffList.forEach(command -> finalGuild.deleteCommandById(command).queue());
+        String cmd = getConfiguration().getString(embedPath + "command", "os");
+        getLogger().info("Registered command: /" + cmd + " at guild-id: " + guild.getId());
 
-        onlineList.clear();
-        staffList.clear();
+        staffCommands.add(cmd);
+
+        registerCommand(
+            guild,
+            Commands.slash(
+                cmd,
+                description
+            )
+        );
+
+        if (getConfiguration().contains(embedPath + "command-aliases")) {
+            for (String command : getConfiguration().getStringList(embedPath + "command-aliases")) {
+                getLogger().info("Registered command: /" + command + " at guild-id: " + guild.getId());
+                staffCommands.add(command);
+                registerCommand(
+                    guild,
+                    Commands.slash(
+                        command,
+                        description
+                    )
+                );
+            }
+        }
     }
 
-    public ArrayList<String> getOnlineList() {
-        return onlineList;
+    @Override
+    public void onDisable() {
+        getLogger().info("All listeners are unloaded from Minedis Online");
+
+        staffCommands.clear();
+        onlineCommands.clear();
     }
 
-    public ArrayList<String> getStaffList() {
-        return staffList;
+    public ArrayList<String> getOnlineCommands() {
+        return onlineCommands;
+    }
+
+    public ArrayList<String> getStaffCommands() {
+        return staffCommands;
     }
 }

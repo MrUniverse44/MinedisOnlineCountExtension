@@ -55,11 +55,11 @@ public class EmbedSection {
         if (configuration.contains("fields")) {
             for (String key : configuration.getSection("fields").getKeys()) {
                 fieldList.add(
-                        new EmbedField(
-                                configuration.getBoolean("fields." + key + ".inline", true),
-                                configuration.getString("fields." + key + ".name", " "),
-                                configuration.getString("fields." + key + ".value", " ")
-                        )
+                    new EmbedField(
+                        configuration.getBoolean("fields." + key + ".inline", true),
+                        configuration.getString("fields." + key + ".name", " "),
+                        configuration.getString("fields." + key + ".value", " ")
+                    )
                 );
             }
         }

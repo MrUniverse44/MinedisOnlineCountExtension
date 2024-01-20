@@ -19,7 +19,7 @@ public class DiscordCommandListener extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
-        if (plugin.getOnlineList().contains(event.getName()) || plugin.getStaffList().contains(event.getName())) {
+        if (plugin.getOnlineCommands().contains(event.getName()) || plugin.getStaffCommands().contains(event.getName())) {
 
             String permission = plugin.getConfiguration().getString("settings.staff-permission", "minedis.online.staff");
 
@@ -34,7 +34,7 @@ public class DiscordCommandListener extends ListenerAdapter {
                 users++;
             }
 
-            String path = plugin.getOnlineList().contains(event.getName()) ?
+            String path = plugin.getOnlineCommands().contains(event.getName()) ?
                     "settings.commands.default-online" : "settings.commands.staff-online";
 
             event.deferReply(true).queue();
